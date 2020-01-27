@@ -8,7 +8,7 @@ Base Dockerfile based heavily on: https://hub.docker.com/r/ekho/nginx-lua/docker
 
 ### Base Image
 
-Build base image with `docker build -t nginx-with-prometheus -f Base.Dockerfile .` (replace with your own tag as needed).
+Build base image with `docker build -t nginx-with-prometheus .` (replace with your own tag as needed).
 
 You can test this with: `docker run -p 8080:8080 -p 9145:9145 nginx-with-prometheus:latest` - `curl http://localhost:8080/` should 404, and `curl http://localhost:9145/metrics` should show you some metrics.
 
@@ -25,7 +25,7 @@ COPY example/index.html /app/
 COPY example/default.conf /etc/nginx/conf.d/
 ```
 
-Which you can then build and run ...
+Which you can then build and run as usual:
 
 ```sh
 docker build -t your-website -f Example.Dockerfile .
