@@ -1,6 +1,9 @@
 ARG NGINX_VERSION=1.17.8
 
 FROM debian:stretch-slim as builder
+
+LABEL maintainer="alex@mosstech.io" src="https://github.com/alexdmoss/nginx-with-prometheus"
+
 ARG NGINX_VERSION
 ENV LUA_VERSION 5.1
 ENV LUAJIT2_VERSION 2.1-20200102
@@ -107,6 +110,9 @@ RUN set -x \
 # -------------------------------------------------------------------------------------
 
 FROM nginx:${NGINX_VERSION}
+
+LABEL maintainer="alex@mosstech.io" src="https://github.com/alexdmoss/nginx-with-prometheus"
+
 RUN set -x \
     && apt-get update \
     && apt-get install -y libssl1.1 \
