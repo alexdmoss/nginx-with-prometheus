@@ -6,6 +6,15 @@ Base Dockerfile based heavily on: https://hub.docker.com/r/ekho/nginx-lua/docker
 
 ## Usage
 
+### Build for Docker Hub
+
+It's hooked up to their auto-build setup. Use as follows:
+
+```sh
+git tag -a 1.2 -m "something that describes the change"
+git push origin 1.2
+```
+
 ### Base Image
 
 Build base image with `docker build -t nginx-with-prometheus .` (replace with your own tag as needed).
