@@ -12,7 +12,7 @@ build:
   services:
     - docker:dind
   before_script:
-    - sleep 5
+    - until docker info; do sleep 1; echo "Waiting for docker startup"; done
     - echo "${DOCKER_CREDS}" | docker login --username mosstech --password-stdin
   script:
     - docker build -t mosstech/nginx-with-prometheus:${IMAGE_TAG} .
