@@ -12,7 +12,7 @@ build:
   services:
     - docker:dind
   before_script:
-    - sleep 1
+    - sleep 5
     - echo "${DOCKER_CREDS}" | docker login --username mosstech --password-stdin
   script:
     - docker build -t mosstech/nginx-with-prometheus:${IMAGE_TAG} .
