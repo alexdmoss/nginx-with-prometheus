@@ -15,7 +15,5 @@ build:
     - until docker info >/dev/null; do sleep 1; echo "Waiting for docker startup"; done
     - echo "${DOCKER_CREDS}" | docker login --username mosstech --password-stdin
   script:
-    - docker build -t mosstech/nginx-with-prometheus:${IMAGE_TAG} .
-    - docker tag mosstech/nginx-with-prometheus:${IMAGE_TAG} al3xos/nginx-with-prometheus:${IMAGE_TAG}
-    - docker push mosstech/nginx-with-prometheus:${IMAGE_TAG}
+    - docker build -t al3xos/nginx-with-prometheus:${IMAGE_TAG} .
     - docker push al3xos/nginx-with-prometheus:${IMAGE_TAG}
