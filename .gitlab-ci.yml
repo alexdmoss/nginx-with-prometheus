@@ -34,7 +34,7 @@ scan:
     - wget https://github.com/aquasecurity/trivy/releases/download/v"${TRIVY_VERSION}"/trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz
     - tar zxf trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz && mv trivy /usr/local/bin/trivy
   script:
-    - trivy image --vuln-type os --security-checks vuln --exit-code 1 --severity CRITICAL,HIGH "${IMAGE_TAG}-intermediate"
+    - trivy image --vuln-type os --security-checks vuln --exit-code 1 --severity CRITICAL,HIGH "al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate"
   allow_failure: true
 
 push:
