@@ -1,11 +1,40 @@
 stages:
-- build-and-push
+- build
+- scan
+- push
 
 variables:
-  IMAGE_TAG: "1.5"
+  IMAGE_TAG: "1.6"
+  TRIVY_VERSION: "0.50.1"
 
 build:
-  stage: build-and-push
+  stage: build
+  image: docker:stable
+  only:
+    - main
+  services:
+    - docker:dind
+  before_script:
+    - until docker info >/dev/null; do sleep 1; echo "Waiting for docker startup"; done
+    - echo "${DOCKER_CREDS}" | docker login --username al3xos --password-stdin
+  script:
+    - docker build -t al3xos/nginx-with-prometheus:${IMAGE_TAG} .
+    - docker push al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate
+
+scan:
+  stage: scan
+  image: mosstech/ci-tools:latest
+  only:
+    - main
+  before_script:
+    - wget https://github.com/aquasecurity/trivy/releases/download/v"${TRIVY_VERSION}"/trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz
+    - tar zxvf trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz && mv trivy /usr/local/bin/trivy
+  script:
+    - trivy image --vuln-type os --security-checks vuln --exit-code 1 --severity CRITICAL,HIGH "${IMAGE_TAG}"
+  allow_failure: true
+
+push:
+  stage: push
   image: docker:stable
   only:
   - main
@@ -15,5 +44,6 @@ build:
     - until docker info >/dev/null; do sleep 1; echo "Waiting for docker startup"; done
     - echo "${DOCKER_CREDS}" | docker login --username al3xos --password-stdin
   script:
-    - docker build -t al3xos/nginx-with-prometheus:${IMAGE_TAG} .
+    - docker pull al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate
+    - docker tag al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate al3xos/nginx-with-prometheus:${IMAGE_TAG}
     - docker push al3xos/nginx-with-prometheus:${IMAGE_TAG}
