@@ -23,17 +23,17 @@ build:
 
 scan:
   stage: scan
-  image: al3xos/ci-tools:latest
+  image: docker:stable
   only:
     - main
   services:
     - docker:dind
   before_script:
+    - until docker info >/dev/null; do sleep 1; echo "Waiting for docker startup"; done
+    - echo "${DOCKER_CREDS}" | docker login --username al3xos --password-stdin
     - wget https://github.com/aquasecurity/trivy/releases/download/v"${TRIVY_VERSION}"/trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz
-    - tar zxvf trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz && mv trivy /usr/local/bin/trivy
+    - tar zxf trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz && mv trivy /usr/local/bin/trivy
   script:
-    - docker info
-    - docker run hello-world
     - trivy image --vuln-type os --security-checks vuln --exit-code 1 --severity CRITICAL,HIGH "${IMAGE_TAG}-intermediate"
   allow_failure: true
 
