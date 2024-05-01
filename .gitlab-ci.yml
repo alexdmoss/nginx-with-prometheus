@@ -23,7 +23,7 @@ build:
 
 scan:
   stage: scan
-  image: mosstech/ci-tools:latest
+  image: al3xos/ci-tools:latest
   only:
     - main
   services:
