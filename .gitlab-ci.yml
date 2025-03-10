@@ -4,8 +4,8 @@ stages:
 - push
 
 variables:
-  IMAGE_TAG: "1.8"
-  TRIVY_VERSION: "0.50.1"
+  IMAGE_TAG: "1.9"
+  TRIVY_VERSION: "0.60.0"
 
 build:
   stage: build
