@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.22
 
 LABEL maintainer="alex@alexos.dev" src="https://github.com/alexdmoss/nginx-with-prometheus"
 
