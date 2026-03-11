@@ -5,7 +5,7 @@ stages:
 
 variables:
   IMAGE_TAG: "1.13"
-  TRIVY_VERSION: "0.69.1"
+  TRIVY_VERSION: "0.69.3"
 
 .build:
   image: al3xos/ci-tools:latest
