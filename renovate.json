@@ -1,0 +1,10 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Example.Dockerfile uses this repo's own image. Every publish changes its digest, so a pinned digest raises a new MR after every merge. Track the tag only.",
+      "matchPackageNames": ["al3xos/nginx-with-prometheus"],
+      "pinDigests": false
+    }
+  ]
+}
