@@ -42,16 +42,18 @@ code=$(status_of "http://${HOST}:8080/")
 [[ "${code}" =~ ^(200|404)$ ]] || { echo "FAIL: / returned ${code}"; exit 1; }
 
 echo "-> security headers set"
-curl -s -D - -o /dev/null "http://${HOST}:8080/" | grep -qi '^X-Content-Type-Options: nosniff' \
+# Capture first: with pipefail, `curl | grep -q` fails when grep exits before curl finishes
+headers=$(curl -s -D - -o /dev/null "http://${HOST}:8080/")
+grep -qi '^X-Content-Type-Options: nosniff' <<<"${headers}" \
   || { echo "FAIL: X-Content-Type-Options missing"; exit 1; }
 
 echo "-> metrics endpoint counts the request"
 metrics=$(curl -sf "http://${HOST}:9145/metrics")
-echo "${metrics}" | grep -q "^nginx_http_requests_total{.*status=\"${code}\"}" \
+grep -q "^nginx_http_requests_total{.*status=\"${code}\"}" <<<"${metrics}" \
   || { echo "FAIL: request not counted"; echo "${metrics}"; exit 1; }
-echo "${metrics}" | grep -q '^nginx_http_connections{state="waiting"}' \
+grep -q '^nginx_http_connections{state="waiting"}' <<<"${metrics}" \
   || { echo "FAIL: connections gauge missing"; exit 1; }
-echo "${metrics}" | grep -q '^nginx_metric_errors_total 0' \
+grep -q '^nginx_metric_errors_total 0' <<<"${metrics}" \
   || { echo "FAIL: lua metric errors"; echo "${metrics}" | grep nginx_metric_errors; exit 1; }
 
 echo "All image tests passed"
