@@ -8,13 +8,15 @@ Base Dockerfile based heavily on: [https://hub.docker.com/r/ekho/nginx-lua/docke
 
 ## Usage
 
-Update tag at top of `.gitlab-ci.yml` and push to release a new version.
+Every branch builds the image and runs `scripts/tests.sh` against it; nothing is pushed. `main` publishes `IMAGE_TAG` (top of `.gitlab-ci.yml`) once the tests pass. Bump `IMAGE_TAG` to release a new version.
+
+Renovate keeps the Alpine base (tag + digest in the `Dockerfile`) up to date and automerges the MR once the tests pass. A weekly scheduled pipeline on `main` rebuilds and republishes the same tag so Alpine package fixes land between base image releases. Apps pin `al3xos/nginx-with-prometheus:<tag>@sha256:…`, so each publish reaches them as a Renovate digest MR.
 
 ### Base Image
 
 Build base image with `docker build -t nginx-with-prometheus:latest .` (replace with your own tag as needed).
 
-You can test this with: `docker run -p 8080:8080 -p 9145:9145 nginx-with-prometheus:latest` - `curl http://localhost:8080/` should 404, and `curl http://localhost:9145/metrics` should show you some metrics.
+Test it with `./scripts/tests.sh nginx-with-prometheus:latest`: it checks the config, that nginx answers on 8080 as a non-root user, and that `http://localhost:9145/metrics` counts the request.
 
 ### Use It
 

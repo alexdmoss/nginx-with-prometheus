@@ -1,52 +1,70 @@
+workflow:
+  rules:
+    # Avoid duplicate pipelines: the branch pipeline already runs the jobs,
+    # so don't also create a merge request pipeline.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
 stages:
-- build
-- scan
-- push
+  - test
+  - publish
+  - scan
 
 variables:
+  IMAGE_NAME: al3xos/nginx-with-prometheus
+  # The tag published to Docker Hub; apps pin it as tag@digest. The upstream
+  # base (tag + digest) is pinned in the Dockerfile's FROM line, so Renovate
+  # opens a digest MR when Alpine is rebuilt; that MR is what flows on to the apps.
   IMAGE_TAG: "1.17"
-  TRIVY_VERSION: "0.75.0"
 
-.build:
+.docker-hub-login:
+  before_script:
+    - mkdir -p $HOME/.docker
+    - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
+
+# Every branch and the weekly schedule: build the image locally (nothing is
+# pushed) and run the image tests against it. This is what Renovate automerge
+# trusts, and the smoke test for a base image.
+test:
+  stage: test
   image: al3xos/ci-tools:latest
   services:
     - docker:dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
-
-.docker-login:
-  before_script:
-    - until docker info >/dev/null; do sleep 1; echo "Waiting for docker startup"; done
-
-build:
-  stage: build
-  extends:
-    - .build
-    - .docker-login
   script:
-    - docker build -t al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate .
-    - docker push al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate
+    - until docker info >/dev/null 2>&1; do sleep 1; echo "Waiting for docker startup"; done
+    - docker build --pull -t ${IMAGE_NAME}:test .
+    - ./scripts/tests.sh ${IMAGE_NAME}:test docker
 
-scan:
-  stage: scan
-  extends:
-    - .build
-    - .docker-login
-  script:
-    - wget https://github.com/aquasecurity/trivy/releases/download/v"${TRIVY_VERSION}"/trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz
-    - tar zxf trivy_"${TRIVY_VERSION}"_Linux-64bit.tar.gz && mv trivy /usr/local/bin/trivy
-    - trivy image --vuln-type os --security-checks vuln --exit-code 1 --severity CRITICAL,HIGH "al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate"
-  allow_failure: true
-
-push:
-  stage: push
-  extends:
-    - .build
-    - .docker-login
+# Main only (pushes and the weekly schedule), once the tests pass. Rebuilds
+# rather than retagging so the published image matches what the Dockerfile
+# says today; the schedule's rebuild picks up Alpine package fixes.
+publish:
+  stage: publish
+  extends: .docker-hub-login
+  needs:
+    - test
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  image: al3xos/ci-tools:latest
   script:
-    - docker pull al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate
-    - docker tag al3xos/nginx-with-prometheus:${IMAGE_TAG}-intermediate al3xos/nginx-with-prometheus:${IMAGE_TAG}
-    - docker push al3xos/nginx-with-prometheus:${IMAGE_TAG}
+    - alexos-cli build --image-name=$IMAGE_NAME --image-tag=$IMAGE_TAG --backend=buildkit
+
+# Deliberately non-blocking. The vulnerability parts will be wound down over
+# time; secret scanning stays.
+security-scan:
+  stage: scan
+  needs:
+    - publish
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  image: al3xos/ci-tools:latest
+  script:
+    - alexos-cli scan secrets
+    - alexos-cli scan container --image-name=$IMAGE_NAME --image-tag=$IMAGE_TAG
+  allow_failure: true
+  artifacts:
+    when: on_failure
