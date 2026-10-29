@@ -10,6 +10,11 @@ Base Dockerfile based heavily on: [https://hub.docker.com/r/ekho/nginx-lua/docke
 
 Every branch builds the image and runs `scripts/tests.sh` against it; nothing is pushed. `main` publishes `IMAGE_TAG` (top of `.gitlab-ci.yml`) once the tests pass. Bump `IMAGE_TAG` to release a new version.
 
+Each publish pushes two tags for the same image:
+
+- `1.17` (`IMAGE_TAG`): moves on every publish. Pin it with a digest (`1.17@sha256:…`) or accept that it changes.
+- `1.17-<pipeline id>-<YYYY.MM.DD.hhmm>` (UTC, pipeline creation time), e.g. `1.17-3005468189-2026.10.29.1830`: never overwritten, for when you want a readable fixed version.
+
 Renovate keeps the Alpine base (tag + digest in the `Dockerfile`) up to date and automerges the MR once the tests pass. A weekly scheduled pipeline on `main` rebuilds and republishes the same tag so Alpine package fixes land between base image releases. Apps pin `al3xos/nginx-with-prometheus:<tag>@sha256:…`, so each publish reaches them as a Renovate digest MR.
 
 ### Base Image
