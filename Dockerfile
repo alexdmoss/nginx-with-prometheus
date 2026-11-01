@@ -15,7 +15,7 @@ RUN mkdir -p /var/cache/nginx && \
     chmod g+s /var/cache/nginx
 
 RUN mkdir /usr/local/lua && chown nginx /usr/local/lua
-COPY conf/prometheus.lua /usr/local/lua
+COPY conf/lua/*.lua /usr/local/lua/
 
 RUN ln -sf /dev/stdout /var/lib/nginx/logs/access.log
 RUN ln -sf /dev/stderr /var/lib/nginx/logs/error.log

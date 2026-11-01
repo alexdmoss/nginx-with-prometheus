@@ -1,6 +1,6 @@
 # nginx-with-prometheus
 
-Instrumented open-source NGINX with Prometheus metrics from: [https://github.com/knyar/nginx-lua-prometheus/blob/master/prometheus.lua](https://github.com/knyar/nginx-lua-prometheus/blob/master/prometheus.lua)
+Instrumented open-source NGINX with Prometheus metrics from: [knyar/nginx-lua-prometheus](https://github.com/knyar/nginx-lua-prometheus), vendored in `conf/lua/` by `scripts/regenerate.sh` (Renovate bumps the version and reruns it)
 
 Base Dockerfile based heavily on: [https://hub.docker.com/r/ekho/nginx-lua/dockerfile](https://hub.docker.com/r/ekho/nginx-lua/dockerfile), with tweaks to bring in up-to-date versions.
 
