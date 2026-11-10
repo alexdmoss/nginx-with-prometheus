@@ -9,7 +9,6 @@ workflow:
 stages:
   - test
   - publish
-  - scan
 
 variables:
   IMAGE_NAME: al3xos/nginx-with-prometheus
@@ -51,25 +50,10 @@ publish:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   image: al3xos/ci-tools:latest
   script:
+    - alexos-cli scan secrets
     - alexos-cli build --image-name=$IMAGE_NAME --image-tag=$IMAGE_TAG --backend=buildkit
     # Plus an immutable tag for the same digest, e.g. 1.17-3005468189-2026.10.29.1830.
     # Taken from the pipeline's creation time, so a retried job writes the same tag.
     - IMMUTABLE_TAG="${IMAGE_TAG}-${CI_PIPELINE_ID}-$(date -u -d "${CI_PIPELINE_CREATED_AT}" +%Y.%m.%d.%H%M)"
     - gcrane tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMMUTABLE_TAG}
     - echo "Published ${IMAGE_NAME}:${IMAGE_TAG} and ${IMAGE_NAME}:${IMMUTABLE_TAG}"
-
-# Deliberately non-blocking. The vulnerability parts will be wound down over
-# time; secret scanning stays.
-security-scan:
-  stage: scan
-  needs:
-    - publish
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  image: al3xos/ci-tools:latest
-  script:
-    - alexos-cli scan secrets
-    - alexos-cli scan container --image-name=$IMAGE_NAME --image-tag=$IMAGE_TAG
-  allow_failure: true
-  artifacts:
-    when: on_failure
